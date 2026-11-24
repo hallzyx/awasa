@@ -77,7 +77,7 @@ El flujo de consentimiento, intercambio, rotación y revocación se puede probar
 
 Ejemplo para un asistente: «En `core-team-upc`, compara a los postulantes autorizados con esta rúbrica: iniciativa, coordinación y disponibilidad. Justifica cada calificación con sus respuestas y dame los enlaces de las fichas para revisar».
 
-El consentimiento para usar herramientas externas de IA es opcional. Los resultados agregados incluyen la convocatoria completa. El acceso a respuestas individuales requiere ese consentimiento. Las respuestas libres pueden contener información que el postulante haya escrito en el texto. Las herramientas MCP son de solo lectura y la decisión se registra en el portal.
+Las postulaciones nuevas incluyen la autorización para el análisis con IA externa en la casilla obligatoria de tratamiento de datos. Los resultados agregados incluyen la convocatoria completa. El acceso a respuestas individuales requiere la autorización registrada en cada postulación. Las respuestas libres pueden contener información que el postulante haya escrito en el texto. Las herramientas MCP son de solo lectura y la decisión se registra en el portal.
 
 ## Código y pruebas
 

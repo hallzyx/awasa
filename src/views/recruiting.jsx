@@ -1,4 +1,5 @@
 import { ArrowRight, BarChart3, CalendarDays, Check, ChevronDown, ClipboardList, Download, ExternalLink, FileText, Link2, Plus, Search } from 'lucide-react';
+import { combinedConsentValue } from '../recruiting/consent.js';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -149,10 +150,17 @@ function PublicQuestion({ item, values, error, profileLabels }) {
   const hint = [item.hint, item.words ? 'Máximo ' + item.words + ' palabras.' : ''].filter(Boolean).join(' ');
   const described = [hint && id + '-hint', error && id + '-error'].filter(Boolean).join(' ') || undefined;
   const attrs = { id, name: id, required: item.required, 'aria-invalid': error ? true : undefined, 'aria-describedby': described };
-  if (item.type === 'check') return <div className="public-question">
-    <label className="choice-row"><input {...attrs} type="checkbox" defaultChecked={value === 'yes'} value="yes"/><span>{item.label}</span></label>
-    {error && <p className="field-error" id={id + '-error'}>{error}</p>}
-  </div>;
+  if (item.type === 'check') {
+    const isConsent = item.id === 'consent';
+    const checkedValue = isConsent ? combinedConsentValue : 'yes';
+    return <div className="public-question">
+      <label className="choice-row">
+        <input {...attrs} type="checkbox" defaultChecked={value === checkedValue} value={checkedValue}/>
+        <span>{item.label}{isConsent && ' También autorizo que un servicio externo de IA reciba mis respuestas para resumirlas y compararlas con los criterios de la convocatoria. El equipo toma la decisión final.'}</span>
+      </label>
+      {error && <p className="field-error" id={id + '-error'}>{error}</p>}
+    </div>;
+  }
   if (['choice', 'multi', 'links'].includes(item.type)) {
     const selected = Array.isArray(value) ? value : [value];
     return <fieldset className="public-question" aria-describedby={described}>
@@ -191,10 +199,6 @@ export function PublicForm({ form, csrf, errors, values, sent, profileLabels }) 
         {form.sections.map(section => <SectionCard key={section.fields[0].id} title={section.title} description={section.hint}>
           <div className="public-questions">{section.fields.map(item => <PublicQuestion key={item.id} item={item} values={values} error={errors[item.id]} profileLabels={profileLabels}/>)}</div>
         </SectionCard>)}
-        <SectionCard title="Asistencia de IA" description="El equipo revisa cada decisión. Puedes elegir si tus respuestas se usan con herramientas de IA para apoyar la evaluación.">
-          <label className="choice-row"><input type="checkbox" name="ai_consent" value="yes" defaultChecked={values.ai_consent === 'yes'}/>
-          <span>Autorizo el análisis de mis respuestas con herramientas de IA externas para esta convocatoria. Es opcional. Evita incluir datos sensibles en las respuestas de texto.</span></label>
-        </SectionCard>
         <Button size="lg" className="self-start">Enviar postulación <ArrowRight/></Button>
       </form>
     </>}

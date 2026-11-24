@@ -54,7 +54,7 @@ async function setAccess(page, name, base, role) {
   await expect(page.getByText('Acceso actualizado.')).toBeVisible();
 }
 
-async function submitCore(page, { name, email, optedIn, experience }) {
+async function submitCore(page, { name, email, legacy = false, experience }) {
   await page.goto('/apply/' + coreForm);
   await expect(page.getByRole('heading', { name: 'Forma parte del Core Team' })).toBeVisible();
   await page.getByLabel('Nombres y apellidos').fill(name);
@@ -69,8 +69,12 @@ async function submitCore(page, { name, email, optedIn, experience }) {
   if (experience) await page.locator('#a_experience').fill(experience);
   await page.getByLabel('GitHub', { exact: true }).fill('https://github.com/example');
   await page.locator('#a_commitment').check();
-  await page.locator('#a_consent').check();
-  if (optedIn) await page.locator('[name=ai_consent]').check();
+  const closing = page.locator('.section-card').filter({ has: page.getByRole('heading', { name: 'Cierre', exact: true }) });
+  const consent = closing.getByRole('checkbox', { name: /use mis respuestas y mi correo.*servicio externo de IA/ });
+  await expect(consent).not.toBeChecked();
+  await expect(consent).toHaveAttribute('required', '');
+  if (legacy) await consent.evaluate(input => { input.value = 'yes'; });
+  await consent.check();
   await page.getByRole('button', { name: 'Enviar postulación' }).click();
   await expect(page.getByRole('heading', { name: 'Postulación recibida' })).toBeVisible();
 }
@@ -188,9 +192,14 @@ test('publicar, postular sin cuenta, buscar, revisar y consultar por MCP', async
     expect((await publicPage.goto('/apply/' + coreForm)).status()).toBe(404);
     await page.getByRole('button', { name: 'Publicar convocatoria' }).click();
     await expect(page.getByText('Enlace público')).toBeVisible();
-    await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test', optedIn: true });
-    await submitCore(publicPage, { name: 'Postulante Luz', email: 'luz@example.test', optedIn: false, experience: '=1+1\nLínea con "comillas", tildes y coma.' });
-    await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test', optedIn: true });
+    await publicPage.goto('/apply/' + coreForm);
+    const publicCsrf = await publicPage.locator('input[name="_csrf"]').inputValue();
+    const withoutConsent = await publicPage.request.post('/apply/' + coreForm, { form: { _csrf: publicCsrf } });
+    expect(withoutConsent.status()).toBe(422);
+    expect(await withoutConsent.text()).toContain('id="a_consent-error"');
+    await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test' });
+    await submitCore(publicPage, { name: 'Postulante Luz', email: 'luz@example.test', legacy: true, experience: '=1+1\nLínea con "comillas", tildes y coma.' });
+    await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test' });
 
     await page.reload();
     await expect(page.getByRole('row').filter({ hasText: 'Postulante Ada' })).toHaveCount(1);

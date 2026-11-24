@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isEmail, normalizeEmail } from '../auth/crypto.js';
 import { HttpError, list, requireInput, string } from '../http.js';
+import { combinedConsentValue } from './consent.js';
 
 const field = z.object({
   id: z.string().regex(/^[a-z][a-z0-9_]{0,45}$/),
@@ -64,7 +65,7 @@ export const profileLabels = { linkedin: 'LinkedIn', github: 'GitHub', portfolio
 function parseAnswer(item, body) {
   const raw = body['a_' + item.id];
   let answer = string(raw);
-  if (item.type === 'check') answer = raw === 'yes';
+  if (item.type === 'check') answer = raw === 'yes' || (item.id === 'consent' && raw === combinedConsentValue);
   if (item.type === 'email') {
     answer = normalizeEmail(raw);
     if (answer && !isEmail(answer)) throw new Error('Ingresa un correo válido.');

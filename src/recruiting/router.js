@@ -6,6 +6,7 @@ import { config } from '../config.js';
 import { all, audit, one, transaction } from '../db.js';
 import { can, lockAdmin, requireAdmin, requirePermission } from '../auth/access.js';
 import { HttpError, redirect, requireInput, string, uuid } from '../http.js';
+import { combinedConsentValue } from './consent.js';
 import { fieldsOf, readSchema, starter, validateAnswers } from './schema.js';
 import { application, applications, applicationStates, getForm, listForms, metrics } from './service.js';
 import { responsesCsv } from './export.js';
@@ -32,12 +33,13 @@ publicForms.post('/:slug', submissionsLimit, async (req, res) => {
   if (Object.keys(errors).length) {
     return res.status(422).render('public-form', { title: form.title, form, errors, values: req.body, sent: false });
   }
+  const aiConsent = req.body.a_consent === combinedConsentValue || req.body.ai_consent === 'yes';
   try {
     await transaction(async connection => {
       const current = await one('SELECT status FROM forms WHERE id = ? FOR UPDATE', [form.id], connection);
       if (current.status !== 'open') throw new HttpError(409, 'Esta convocatoria acaba de cerrar.');
       await all('INSERT INTO applications (id, form_id, applicant_name, email, answers, ai_consent) VALUES (?, ?, ?, ?, ?, ?)',
-        [randomUUID(), form.id, answers.name, answers.email, JSON.stringify(answers), req.body.ai_consent === 'yes'], connection);
+        [randomUUID(), form.id, answers.name, answers.email, JSON.stringify(answers), aiConsent], connection);
     });
   } catch (error) {
     if (error.code !== 'ER_DUP_ENTRY') throw error;
