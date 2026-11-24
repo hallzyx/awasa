@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { randomUUID } from 'node:crypto';
+import { pipeline } from 'node:stream/promises';
 import { config } from '../config.js';
 import { all, audit, one, transaction } from '../db.js';
 import { can, lockAdmin, requireAdmin, requirePermission } from '../auth/access.js';
 import { HttpError, redirect, requireInput, string, uuid } from '../http.js';
 import { fieldsOf, readSchema, starter, validateAnswers } from './schema.js';
 import { application, applications, applicationStates, getForm, listForms, metrics } from './service.js';
+import { responsesCsv } from './export.js';
 
 const path = form => '/dashboard/forms/' + form.slug;
 export const publicForms = Router();
@@ -145,6 +147,16 @@ recruiting.post('/forms/:slug/status', requirePermission('forms.manage'), async 
     await audit(req.user.id, status === 'open' ? 'form.opened' : 'form.closed', form.id, connection);
   });
   redirect(res, path(form));
+});
+
+recruiting.post('/forms/:slug/export.csv', requireAdmin, async (req, res) => {
+  await transaction(async connection => {
+    const form = await getForm(req.params.slug, connection);
+    if (form.status !== 'closed') throw new HttpError(409, 'Cierra la convocatoria antes de exportar las respuestas.');
+    await audit(req.user.id, 'form.responses_exported', form.id, connection);
+    res.attachment(form.slug + '-respuestas.csv').type('text/csv; charset=utf-8');
+    await pipeline(responsesCsv(form, connection), res);
+  });
 });
 
 recruiting.get('/forms/:slug/applications/:id', requirePermission('applications.read'), async (req, res) => {

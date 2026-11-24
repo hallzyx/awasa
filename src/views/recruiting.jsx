@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, CalendarDays, Check, ChevronDown, ClipboardList, ExternalLink, FileText, Link2, Plus, Search } from 'lucide-react';
+import { ArrowRight, BarChart3, CalendarDays, Check, ChevronDown, ClipboardList, Download, ExternalLink, FileText, Link2, Plus, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -86,6 +86,9 @@ export function FormDetail(model) {
   return <>
     <Heading title={form.title} description={form.description} back="/dashboard/forms" backLabel="Convocatorias">
       {editable && !form.published_at && <ActionLink href={formPath(form) + '/edit'}>Editar preguntas</ActionLink>}
+      {form.status === 'closed' && model.privileged(user) && <form method="post" action={formPath(form) + '/export.csv'}>
+        <Csrf value={csrf}/><Button type="submit" variant="outline"><Download/> Exportar respuestas (CSV)</Button>
+      </form>}
       {editable && <form method="post" action={formPath(form) + '/status'}>
         <Csrf value={csrf}/><Button name="status" value={form.status === 'open' ? 'closed' : 'open'} variant={form.status === 'open' ? 'outline' : 'default'}>
           {form.status === 'draft' ? 'Publicar convocatoria' : form.status === 'open' ? 'Cerrar convocatoria' : 'Reabrir convocatoria'}

@@ -41,6 +41,8 @@ Una invitación es individual, vinculada a un correo, revocable y de un solo uso
 
 El editor permite preparar otras convocatorias con secciones, texto, opciones, enlaces y casillas. El primer formulario contiene las 20 preguntas del documento de convocatoria, incluidos los campos opcionales de LinkedIn, GitHub y portafolio. Las preguntas quedan fijas al publicarse para que las respuestas mantengan el contexto con el que se recogieron. Puedes cerrar y reabrir la recepción. El panel muestra métricas por estado, día y opciones de respuesta y permite buscar postulaciones por nombre o correo.
 
+El propietario y los administradores pueden pulsar **Exportar respuestas (CSV)** desde el detalle de una convocatoria cerrada. La descarga incluye todas las postulaciones y sus respuestas, con una columna por pregunta y columnas separadas para los enlaces. Incluye el estado, la fecha de envío en UTC y la autorización de análisis con IA.
+
 ## MCP
 
 En **Integraciones MCP**, el propietario y cada administrador pueden generar una clave personal de 30 días. Copia la clave cuando se muestra para guardarla como secreto local. También se pueden revocar las conexiones OAuth en esta pantalla.

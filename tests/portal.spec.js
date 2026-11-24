@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createHash, randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
@@ -53,7 +54,7 @@ async function setAccess(page, name, base, role) {
   await expect(page.getByText('Acceso actualizado.')).toBeVisible();
 }
 
-async function submitCore(page, { name, email, optedIn }) {
+async function submitCore(page, { name, email, optedIn, experience }) {
   await page.goto('/apply/' + coreForm);
   await expect(page.getByRole('heading', { name: 'Forma parte del Core Team' })).toBeVisible();
   await page.getByLabel('Nombres y apellidos').fill(name);
@@ -65,6 +66,7 @@ async function submitCore(page, { name, email, optedIn }) {
   for (const key of ['motivation','initiative','responsibility','learning','case_speaker','case_delivery','exams','proposal']) {
     await page.locator('#a_' + key).fill('Coordiné un taller de Python, documenté el plan y pedí feedback al grupo.');
   }
+  if (experience) await page.locator('#a_experience').fill(experience);
   await page.getByLabel('GitHub', { exact: true }).fill('https://github.com/example');
   await page.locator('#a_commitment').check();
   await page.locator('#a_consent').check();
@@ -113,6 +115,9 @@ test('propietario, invitaciones, jerarquía, referente y permisos revocables', a
     await setAccess(admin, 'Equipo Referente', 'core', 'Analista SBG');
     await signIn(core, 'core@example.test', accountPassword);
     await expect(core.getByRole('link', { name: 'Convocatorias', exact: true })).toBeVisible();
+    const coreCsrf = await core.locator('form[action="/logout"] input[name="_csrf"]').inputValue();
+    const exportDenied = await core.request.post(callForm + '/export.csv', { form: { _csrf: coreCsrf } });
+    expect(exportDenied.status()).toBe(403);
     expect((await core.goto('/dashboard/integrations')).status()).toBe(403);
 
     await invite(admin, member, 'Colaboradora Asignada', 'member@example.test', 'Equipo Referente');
@@ -184,7 +189,7 @@ test('publicar, postular sin cuenta, buscar, revisar y consultar por MCP', async
     await page.getByRole('button', { name: 'Publicar convocatoria' }).click();
     await expect(page.getByText('Enlace público')).toBeVisible();
     await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test', optedIn: true });
-    await submitCore(publicPage, { name: 'Postulante Luz', email: 'luz@example.test', optedIn: false });
+    await submitCore(publicPage, { name: 'Postulante Luz', email: 'luz@example.test', optedIn: false, experience: '=1+1\nLínea con "comillas", tildes y coma.' });
     await submitCore(publicPage, { name: 'Postulante Ada', email: 'ada@example.test', optedIn: true });
 
     await page.reload();
@@ -239,7 +244,21 @@ test('publicar, postular sin cuenta, buscar, revisar y consultar por MCP', async
     const denied = await page.request.get('/mcp', { headers: { Authorization: 'Bearer ' + token } });
     expect(denied.status()).toBe(401);
     await page.goto(callForm);
+    const exportButton = page.getByRole('button', { name: 'Exportar respuestas (CSV)' });
+    await expect(exportButton).toHaveCount(0);
+    const csrf = await page.locator('form[action$="/status"] input[name="_csrf"]').inputValue();
+    expect((await page.request.post(callForm + '/export.csv', { form: { _csrf: csrf } })).status()).toBe(409);
     await page.getByRole('button', { name: 'Cerrar convocatoria' }).click();
+    const downloadStarted = page.waitForEvent('download');
+    await exportButton.click();
+    const download = await downloadStarted;
+    expect(download.suggestedFilename()).toBe('core-team-upc-respuestas.csv');
+    const csv = await readFile(await download.path(), 'utf8');
+    expect(csv).toMatch(/^\uFEFF"Fecha de envío \(UTC\)","Estado"/);
+    expect(csv).toContain('"Aprobada","Postulante Ada","ada@example.test"');
+    expect(csv).toContain('"Nueva","Postulante Luz","luz@example.test"');
+    expect(csv).toContain('"https://github.com/example"');
+    expect(csv).toContain("\"'=1+1\r\nLínea con \"\"comillas\"\", tildes y coma.\"");
     await publicPage.goto('/apply/' + coreForm);
     await expect(publicPage.getByText('La convocatoria está cerrada.')).toBeVisible();
   } finally {
