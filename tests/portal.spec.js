@@ -255,14 +255,32 @@ test('crear un segundo formulario con el editor y validarlo en móvil', async ({
   await page.getByLabel('Identificador del enlace').fill('talleres-prueba');
   await page.getByLabel('Descripción pública').fill('Queremos conocer el interés en talleres de la comunidad.');
   await page.getByRole('button', { name: 'Agregar sección' }).click();
-  const section = page.locator('details.editor-section').last();
-  await section.locator('summary').click();
+  const section = page.locator('section[data-editor-section]:visible');
+  const sections = page.getByRole('navigation', { name: 'Secciones del formulario' });
   await section.getByLabel('Nombre de la sección').fill('Intereses de aprendizaje');
   await section.getByLabel('Pregunta', { exact: true }).fill('¿Qué tecnología te interesa?');
   await section.getByLabel('Tipo de respuesta').selectOption('choice');
+
+  await sections.getByRole('button', { name: /Sobre ti/ }).click();
+  await page.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(section.getByLabel('Opciones (una por línea)')).toBeFocused();
   await section.getByLabel('Opciones (una por línea)').fill('Nube\nDatos');
+
+  await sections.getByRole('button', { name: /Sobre ti/ }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('combobox', { name: 'Seleccionar sección' }).selectOption({ label: '3. Intereses de aprendizaje' });
+  await expect(section.getByLabel('Opciones (una por línea)')).toHaveValue('Nube\nDatos');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.getByRole('heading', { name: 'Convocatoria de talleres' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Editar preguntas' }).click();
+  const title = page.getByLabel('Título', { exact: true });
+  await expect(title).toBeHidden();
+  await page.getByText('Información general', { exact: true }).click();
+  await expect(title).toBeVisible();
+  await expect(title).toHaveValue('Convocatoria de talleres');
+  await page.getByRole('button', { name: 'Guardar borrador' }).click();
   await page.getByRole('button', { name: 'Publicar convocatoria' }).click();
 
   const mobile = await browser.newPage({ baseURL: origin, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });

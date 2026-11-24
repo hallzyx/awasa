@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, CalendarDays, Check, ClipboardList, ExternalLink, FileText, Link2, Plus, Search } from 'lucide-react';
+import { ArrowRight, BarChart3, CalendarDays, Check, ChevronDown, ClipboardList, ExternalLink, FileText, Link2, Plus, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -120,13 +120,16 @@ export function FormEditor({ title, form, csrf, editError, schemaDraft, original
     {editError && <Notice type="error">{editError}</Notice>}
     <form className="stack" method="post" action={action} id="form-editor">
       <Csrf value={csrf}/>
-      <SectionCard title="Información general">
-        <div className="field-grid">
-          <Field label="Título" name="title"><Input name="title" id="title" required minLength={3} maxLength={140} defaultValue={form.title}/></Field>
-          <Field label="Identificador del enlace" name="slug" hint="Ejemplo: core-team-upc."><Input name="slug" id="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxLength={96} defaultValue={form.slug}/></Field>
+      <details className="section-card editor-general" open={!editing || Boolean(editError)}>
+        <summary className="card-heading"><h2>Información general</h2><ChevronDown size={17} aria-hidden="true"/></summary>
+        <div className="section-content">
+          <div className="field-grid">
+            <Field label="Título" name="title"><Input name="title" id="title" required minLength={3} maxLength={140} defaultValue={form.title}/></Field>
+            <Field label="Identificador del enlace" name="slug"><Input aria-describedby="slug-hint" name="slug" id="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxLength={96} defaultValue={form.slug}/><p id="slug-hint">Ejemplo: core-team-upc.</p></Field>
+          </div>
+          <Field label="Descripción pública" name="description"><Textarea name="description" id="description" required minLength={5} maxLength={3000} rows={3} defaultValue={form.description}/></Field>
         </div>
-        <Field label="Descripción pública" name="description"><Textarea name="description" id="description" required minLength={5} maxLength={3000} rows={3} defaultValue={form.description}/></Field>
-      </SectionCard>
+      </details>
       <SectionCard title="Secciones y preguntas" description="Nombre, correo y autorización de evaluación se incluyen en cada convocatoria.">
         <Island name="editor" props={{ initial: form.sections, draft: schemaDraft || '' }}>
           <Field label="Configuración de preguntas" name="schema"><Textarea id="schema" name="schema" defaultValue={schemaDraft || JSON.stringify(form.sections, null, 2)} rows={10}/></Field>

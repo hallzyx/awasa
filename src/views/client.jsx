@@ -77,6 +77,10 @@ for (const form of document.querySelectorAll('[data-confirm]')) {
 
 const editorForm = document.getElementById('form-editor');
 editorForm?.addEventListener('invalid', event => {
+  if (event.target !== editorForm.querySelector(':invalid')) {
+    event.preventDefault();
+    return;
+  }
   let parent = event.target.closest('details');
   while (parent) {
     parent.open = true;
