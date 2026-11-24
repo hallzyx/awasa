@@ -130,13 +130,19 @@
 .card-heading h2 { letter-spacing: -.025em; font-size: 17px; }
 .card-heading p { margin-top: 4px; color: var(--muted-foreground); font-size: 13px; line-height: 1.5; }
 .section-content { padding: 17px 20px 20px; display: grid; gap: 14px; min-width: 0; }
-.record-list { display: grid; }
+.record-list { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .record-row { display: flex; gap: 13px; padding: 12px 0; align-items: center; border-bottom: 1px solid #eeede9; }
 .record-row:first-child { padding-top: 0; }
 .record-row:last-child { border: 0; padding-bottom: 0; }
 .record-row:hover .record-info strong { color: var(--primary); }
 .record-info { min-width: 0; flex: 1; }
-.record-info strong, .record-info small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.record-info strong, .record-info small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
 .record-info small, .muted { color: var(--muted-foreground); }
 .record-info small { margin-top: 3px; font-size: 12px; }
 .record-count { white-space: nowrap; font-size: 12px; }

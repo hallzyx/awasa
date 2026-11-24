@@ -146,6 +146,33 @@ test('propietario, invitaciones, jerarquía, referente y permisos revocables', a
   }
 });
 
+test('mantener una convocatoria con descripción larga dentro de la tarjeta', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/dashboard/forms');
+  const row = page.locator('.record-row').filter({ hasText: 'Forma parte del Core Team' });
+  await expect(row).toBeVisible();
+
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const layout = await row.evaluate(link => {
+      const card = link.closest('.section-card').getBoundingClientRect();
+      const status = link.querySelector('.status').getBoundingClientRect();
+      return {
+        rowRight: link.getBoundingClientRect().right,
+        cardRight: card.right,
+        statusRight: status.right,
+        documentWidth: document.documentElement.scrollWidth,
+      };
+    });
+    expect(layout.rowRight, 'borde de la fila a ' + width + ' px').toBeLessThanOrEqual(layout.cardRight);
+    expect(layout.statusRight, 'borde del estado a ' + width + ' px').toBeLessThanOrEqual(layout.rowRight);
+    expect(layout.documentWidth).toBeLessThanOrEqual(width);
+  }
+
+  await row.click();
+  await expect(page).toHaveURL(callForm);
+});
+
 test('publicar, postular sin cuenta, buscar, revisar y consultar por MCP', async ({ page, browser }) => {
   const publicPage = await browser.newPage({ baseURL: origin });
   let client;
