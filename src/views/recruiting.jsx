@@ -156,7 +156,7 @@ function PublicQuestion({ item, values, error, profileLabels }) {
     return <div className="public-question">
       <label className="choice-row">
         <input {...attrs} type="checkbox" defaultChecked={value === checkedValue} value={checkedValue}/>
-        <span>{item.label}{isConsent && ' También autorizo que un servicio externo de IA reciba mis respuestas para resumirlas y compararlas con los criterios de la convocatoria. El equipo toma la decisión final.'}</span>
+        <span>{item.label}{isConsent && ' También autorizo que un servicio externo reciba y procese mis respuestas para apoyar la evaluación de mi postulación, según los criterios que defina el equipo de revisión. El equipo siempre toma la decisión final.'}</span>
       </label>
       {error && <p className="field-error" id={id + '-error'}>{error}</p>}
     </div>;

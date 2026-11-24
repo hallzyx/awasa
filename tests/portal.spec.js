@@ -70,7 +70,7 @@ async function submitCore(page, { name, email, legacy = false, experience }) {
   await page.getByLabel('GitHub', { exact: true }).fill('https://github.com/example');
   await page.locator('#a_commitment').check();
   const closing = page.locator('.section-card').filter({ has: page.getByRole('heading', { name: 'Cierre', exact: true }) });
-  const consent = closing.getByRole('checkbox', { name: /use mis respuestas y mi correo.*servicio externo de IA/ });
+  const consent = closing.getByRole('checkbox', { name: /use mis respuestas y mi correo.*servicio externo reciba y procese mis respuestas/ });
   await expect(consent).not.toBeChecked();
   await expect(consent).toHaveAttribute('required', '');
   if (legacy) await consent.evaluate(input => { input.value = 'yes'; });
